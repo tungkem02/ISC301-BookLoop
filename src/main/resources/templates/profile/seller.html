@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/layout :: head(${seller.fullName})}"></head>
+<body>
+<nav th:replace="~{layout/layout :: navbar}"></nav>
+
+<main class="page-container page-content">
+
+    <!-- Breadcrumb -->
+    <nav class="bl-breadcrumb" aria-label="Breadcrumb">
+        <a th:href="@{/}">Home</a>
+        <span class="separator">/</span>
+        <span class="current" th:text="${seller.fullName + '''s Profile'}">Seller</span>
+    </nav>
+
+    <!-- Seller info header -->
+    <div class="profile-header-card mb-4">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            <div class="profile-avatar-lg"
+                 th:text="${#strings.substring(seller.fullName, 0, 1)}">?</div>
+            <div>
+                <h2 style="font-size:1.5rem; font-weight:800; margin-bottom:0.25rem;"
+                    th:text="${seller.fullName}">Seller</h2>
+                <p style="opacity:0.8; font-size:0.875rem; margin:0;"
+                   th:if="${seller.university != null}"
+                   th:text="${seller.university}"></p>
+                <p style="opacity:0.7; font-size:0.8rem; margin:0;"
+                   th:if="${seller.campus != null}">
+                    <i class="fa-solid fa-location-dot me-1"></i>
+                    <span th:text="${seller.campus}"></span>
+                </p>
+                <p style="opacity:0.6; font-size:0.75rem; margin-top:0.5rem; margin-bottom:0;"
+                   th:text="'Member since ' + ${#temporals.format(seller.createdAt, 'MMMM yyyy')}">
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seller's Listings -->
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="fa-solid fa-book-open me-2" style="color:var(--color-primary);"></i>
+            Listings by <span th:text="${seller.fullName}">Seller</span>
+        </h2>
+    </div>
+
+    <!-- Listing grid (only AVAILABLE listings shown publicly) -->
+    <div th:if="${not #lists.isEmpty(listings)}"
+         class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-4">
+        <div th:each="book : ${listings}" class="col"
+             th:if="${book.status.name() == 'AVAILABLE'}">
+            <a th:href="@{/books/{id}(id=${book.id})}" class="text-decoration-none">
+                <div class="book-card">
+                    <div class="book-card-image">
+                        <img th:if="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)}"
+                             th:src="${book.imageUrl}" th:alt="${book.title}"
+                             onerror="this.parentElement.querySelector('.book-placeholder').style.display='block'; this.style.display='none';"/>
+                        <div class="book-placeholder"
+                             th:style="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)} ? 'display:none' : ''">📖</div>
+                        <div class="book-card-badges">
+                            <span th:if="${book.courseCode != null}" class="badge-course"
+                                  th:text="${book.courseCode}"></span>
+                            <span class="badge-condition" th:classappend="${book.condition.name()}"
+                                  th:text="${book.condition.displayName}"></span>
+                        </div>
+                    </div>
+                    <div class="book-card-body">
+                        <div class="book-card-meta"
+                             th:text="${book.category != null ? book.category : 'Textbook'}"></div>
+                        <div class="book-card-title" th:text="${book.title}">Title</div>
+                        <div class="book-card-author" th:if="${book.author != null}"
+                             th:text="${book.author}"></div>
+                        <div class="book-card-footer">
+                            <div class="book-card-price" th:text="${'$' + book.price}">$0</div>
+                            <div class="book-card-location">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span th:text="${book.campus}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${#lists.isEmpty(listings)}" class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>No listings yet</h3>
+        <p>This seller doesn't have any active listings at the moment.</p>
+        <a th:href="@{/books}" class="btn-primary-bl mt-3">
+            <i class="fa-solid fa-arrow-left me-1"></i>Browse All Books
+        </a>
+    </div>
+</main>
+
+<footer th:replace="~{layout/layout :: footer}"></footer>
+<th:block th:replace="~{layout/layout :: scripts}"></th:block>
+</body>
+</html>

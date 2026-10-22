@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/layout :: head('Browse Books')}"></head>
+<body>
+<nav th:replace="~{layout/layout :: navbar}"></nav>
+
+<main class="page-container page-content">
+
+    <!-- Page Header -->
+    <div class="mb-4">
+        <h1 class="section-title">All Books Available</h1>
+        <p class="text-muted" th:text="${totalItems} + ' book(s) available for sale'">Books available</p>
+    </div>
+
+    <!-- Flash messages -->
+    <div th:if="${param.notFound}" class="alert-warning-bl mb-4">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>That listing could not be found.</span>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ===============================================================
+             LEFT: FILTER PANEL
+             =============================================================== -->
+        <div class="col-lg-3">
+            <div class="filter-panel">
+                <form th:action="@{/books}" method="get" id="filterForm" class="search-form">
+
+                    <!-- Keyword Search -->
+                    <div class="mb-4">
+                        <div class="filter-section-title">Search</div>
+                        <div class="input-group">
+                            <input type="text" name="keyword" id="searchKeyword"
+                                   th:value="${keyword}"
+                                   class="form-control"
+                                   style="border-radius: var(--radius-lg) 0 0 var(--radius-lg); border: 1.5px solid var(--color-gray-200); font-size: 0.875rem;"
+                                   placeholder="Title, course, author..."/>
+                            <button type="submit"
+                                    style="background:var(--color-primary);color:#fff;border:none;padding:0 1rem;border-radius:0 var(--radius-lg) var(--radius-lg) 0;font-size:0.875rem;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="mb-4" th:if="${not #lists.isEmpty(categories)}">
+                        <div class="filter-section-title">Category</div>
+                        <select name="category" id="categoryFilter"
+                                class="form-select form-select-sm"
+                                style="border-radius: var(--radius-md); border: 1.5px solid var(--color-gray-200);"
+                                onchange="document.getElementById('filterForm').submit()">
+                            <option value="">All Categories</option>
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat}"
+                                    th:text="${cat}"
+                                    th:selected="${cat == selectedCategory}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Campus Filter -->
+                    <div class="mb-4" th:if="${not #lists.isEmpty(campuses)}">
+                        <div class="filter-section-title">Campus / Meetup</div>
+                        <select name="campus" id="campusFilter"
+                                class="form-select form-select-sm"
+                                style="border-radius: var(--radius-md); border: 1.5px solid var(--color-gray-200);"
+                                onchange="document.getElementById('filterForm').submit()">
+                            <option value="">All Campuses</option>
+                            <option th:each="camp : ${campuses}"
+                                    th:value="${camp}"
+                                    th:text="${camp}"
+                                    th:selected="${camp == selectedCampus}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Condition Filter -->
+                    <div class="mb-4">
+                        <div class="filter-section-title">Condition</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a th:href="@{/books(keyword=${keyword},category=${selectedCategory},campus=${selectedCampus},minPrice=${minPrice},maxPrice=${maxPrice})}"
+                               class="filter-chip"
+                               th:classappend="${selectedCondition == null or selectedCondition.isEmpty()} ? 'active' : ''">
+                                All
+                            </a>
+                            <th:block th:each="cond : ${conditions}">
+                                <a th:href="@{/books(keyword=${keyword},category=${selectedCategory},campus=${selectedCampus},condition=${cond.name()},minPrice=${minPrice},maxPrice=${maxPrice})}"
+                                   class="filter-chip"
+                                   th:classappend="${selectedCondition == cond.name()} ? 'active' : ''"
+                                   th:text="${cond.displayName}">
+                                </a>
+                            </th:block>
+                        </div>
+                    </div>
+
+                    <!-- Price Range Filter -->
+                    <div class="mb-4">
+                        <div class="filter-section-title">Price Range</div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="number" name="minPrice" id="minPrice"
+                                       th:value="${minPrice}"
+                                       class="form-control form-control-sm"
+                                       style="border-radius: var(--radius-md); border: 1.5px solid var(--color-gray-200);"
+                                       placeholder="Min $" min="0" step="0.01"/>
+                            </div>
+                            <div class="col-6">
+                                <input type="number" name="maxPrice" id="maxPrice"
+                                       th:value="${maxPrice}"
+                                       class="form-control form-control-sm"
+                                       style="border-radius: var(--radius-md); border: 1.5px solid var(--color-gray-200);"
+                                       placeholder="Max $" min="0" step="0.01"/>
+                            </div>
+                        </div>
+                        <!-- Hidden fields to preserve other filters on price submit -->
+                        <input type="hidden" name="keyword" th:value="${keyword}"/>
+                        <input type="hidden" name="category" th:value="${selectedCategory}"/>
+                        <input type="hidden" name="campus" th:value="${selectedCampus}"/>
+                        <input type="hidden" name="condition" th:value="${selectedCondition}"/>
+                        <button type="submit" class="btn-outline-bl w-100 mt-2"
+                                style="border-radius:var(--radius-md);">
+                            Apply Price Filter
+                        </button>
+                    </div>
+
+                    <!-- Clear Filters -->
+                    <a th:href="@{/books}"
+                       class="d-block text-center text-muted small mt-2"
+                       style="text-decoration:underline;">
+                        Clear all filters
+                    </a>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===============================================================
+             RIGHT: BOOK LIST
+             =============================================================== -->
+        <div class="col-lg-9">
+
+            <!-- Sort + result count bar -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <span class="text-muted small">
+                    Showing <strong th:text="${#lists.size(products)}">0</strong>
+                    of <strong th:text="${totalItems}">0</strong> results
+                    <th:block th:if="${keyword != null and !keyword.isEmpty()}">
+                        for "<strong th:text="${keyword}"></strong>"
+                    </th:block>
+                </span>
+                <select id="sortSelect" class="form-select form-select-sm w-auto"
+                        style="border-radius: var(--radius-md); border:1.5px solid var(--color-gray-200); font-size:0.8rem;">
+                    <option>Newest First</option>
+                </select>
+            </div>
+
+            <!-- Results grid -->
+            <div th:if="${not #lists.isEmpty(products)}"
+                 class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4">
+                <div th:each="book : ${products}" class="col">
+                    <a th:href="@{/books/{id}(id=${book.id})}" class="text-decoration-none">
+                        <div class="book-card">
+                            <div class="book-card-image">
+                                <img th:if="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)}"
+                                     th:src="${book.imageUrl}"
+                                     th:alt="${book.title}"
+                                     onerror="this.parentElement.querySelector('.book-placeholder').style.display='block'; this.style.display='none';"/>
+                                <div class="book-placeholder"
+                                     th:style="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)} ? 'display:none' : ''">
+                                    📖
+                                </div>
+                                <div class="book-card-badges">
+                                    <span th:if="${book.courseCode != null}"
+                                          class="badge-course" th:text="${book.courseCode}"></span>
+                                    <span class="badge-condition"
+                                          th:classappend="${book.condition.name()}"
+                                          th:text="${book.condition.displayName}"></span>
+                                </div>
+                            </div>
+                            <div class="book-card-body">
+                                <div class="book-card-meta"
+                                     th:text="${book.category != null ? book.category : 'Textbook'}"></div>
+                                <div class="book-card-title" th:text="${book.title}">Title</div>
+                                <div class="book-card-author" th:if="${book.author != null}"
+                                     th:text="${book.author}"></div>
+                                <div class="book-card-footer">
+                                    <div class="book-card-price"
+                                         th:text="${'$' + book.price}">$0.00</div>
+                                    <div class="book-card-location">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <span th:text="${book.campus}"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Empty Results -->
+            <div th:if="${#lists.isEmpty(products)}" class="empty-state">
+                <div class="empty-icon">🔍</div>
+                <h3>No books found</h3>
+                <p>Try adjusting your filters or searching with different keywords.</p>
+                <a th:href="@{/books}" class="btn-primary-bl mt-3">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Clear Filters
+                </a>
+            </div>
+
+            <!-- PAGINATION -->
+            <div th:if="${totalPages > 1}" class="bl-pagination">
+                <!-- Previous -->
+                <a th:if="${currentPage > 0}"
+                   th:href="@{/books(keyword=${keyword},category=${selectedCategory},campus=${selectedCampus},condition=${selectedCondition},minPrice=${minPrice},maxPrice=${maxPrice},page=${currentPage - 1})}"
+                   class="page-btn">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+                <span th:if="${currentPage == 0}" class="page-btn disabled">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </span>
+
+                <!-- Page numbers -->
+                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                    <a th:if="${i != currentPage}"
+                       th:href="@{/books(keyword=${keyword},category=${selectedCategory},campus=${selectedCampus},condition=${selectedCondition},minPrice=${minPrice},maxPrice=${maxPrice},page=${i})}"
+                       class="page-btn" th:text="${i + 1}">1</a>
+                    <span th:if="${i == currentPage}" class="page-btn active"
+                          th:text="${i + 1}">1</span>
+                </th:block>
+
+                <!-- Next -->
+                <a th:if="${currentPage < totalPages - 1}"
+                   th:href="@{/books(keyword=${keyword},category=${selectedCategory},campus=${selectedCampus},condition=${selectedCondition},minPrice=${minPrice},maxPrice=${maxPrice},page=${currentPage + 1})}"
+                   class="page-btn">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+                <span th:if="${currentPage >= totalPages - 1}" class="page-btn disabled">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </span>
+            </div>
+
+        </div><!-- /col-lg-9 -->
+    </div><!-- /row -->
+</main>
+
+<footer th:replace="~{layout/layout :: footer}"></footer>
+<th:block th:replace="~{layout/layout :: scripts}"></th:block>
+</body>
+</html>

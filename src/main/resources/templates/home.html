@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/layout :: head('Home')}"></head>
+<body>
+
+<nav th:replace="~{layout/layout :: navbar}"></nav>
+
+<!-- =====================================================================
+     HERO SECTION
+     ===================================================================== -->
+<section class="bl-hero">
+    <div class="page-container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="hero-badge">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    Exclusively for University Students
+                </div>
+                <h1>Trade &amp; Find Used University Textbooks</h1>
+                <p>Save up to 70% on textbooks. Connect directly with fellow students on campus.</p>
+                <div class="hero-actions">
+                    <a th:href="@{/books}" class="btn-hero-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Browse Books
+                    </a>
+                    <a sec:authorize="isAuthenticated()" th:href="@{/my-listings/new}" class="btn-hero-secondary">
+                        <i class="fa-solid fa-plus"></i>
+                        List a Book
+                    </a>
+                    <a sec:authorize="!isAuthenticated()" th:href="@{/register}" class="btn-hero-secondary">
+                        <i class="fa-solid fa-user-plus"></i>
+                        Join Free
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-flex justify-content-center align-items-center mt-4 mt-lg-0">
+                <div style="font-size: 8rem; opacity: 0.25; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));">
+                    📚
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =====================================================================
+     MAIN CONTENT
+     ===================================================================== -->
+<main class="page-container page-content">
+
+    <!-- Flash messages -->
+    <div th:if="${successMessage}" class="alert-success-bl alert-auto-dismiss fade-in-up">
+        <i class="fa-solid fa-circle-check"></i>
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="alert-error-bl alert-auto-dismiss fade-in-up">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="bl-stats fade-in-up">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #EEF2FF;">📚</div>
+            <div>
+                <div class="stat-value" th:text="${totalListings} + '+'">0+</div>
+                <div class="stat-label">Books Listed</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #ECFDF5;">🤝</div>
+            <div>
+                <div class="stat-value">Student</div>
+                <div class="stat-label">to Student</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #FEF3C7;">💰</div>
+            <div>
+                <div class="stat-value">70%</div>
+                <div class="stat-label">Avg. Savings</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #FEE2E2;">🎓</div>
+            <div>
+                <div class="stat-value">Free</div>
+                <div class="stat-label">to Join</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECENT LISTINGS -->
+    <div class="mt-4">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fa-solid fa-clock-rotate-left me-2" style="color: var(--color-primary);"></i>
+                Recently Listed Near You
+            </h2>
+            <a th:href="@{/books}" class="section-link">
+                View all <i class="fa-solid fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <!-- Book grid -->
+        <div th:if="${not #lists.isEmpty(recentListings)}"
+             class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-4">
+            <div th:each="book, stat : ${recentListings}"
+                 class="col"
+                 th:classappend="'stagger-' + ${stat.index % 4 + 1}">
+                <a th:href="@{/books/{id}(id=${book.id})}" class="text-decoration-none">
+                    <div class="book-card">
+                        <!-- Image area -->
+                        <div class="book-card-image">
+                            <img th:if="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)}"
+                                 th:src="${book.imageUrl}"
+                                 th:alt="${book.title}"
+                                 onerror="this.parentElement.querySelector('.book-placeholder').style.display='block'; this.style.display='none';"/>
+                            <div class="book-placeholder"
+                                 th:style="${book.imageUrl != null and !#strings.isEmpty(book.imageUrl)} ? 'display:none' : ''">
+                                📖
+                            </div>
+                            <!-- Badges -->
+                            <div class="book-card-badges">
+                                <span th:if="${book.courseCode != null}"
+                                      class="badge-course"
+                                      th:text="${book.courseCode}"></span>
+                                <span class="badge-condition"
+                                      th:classappend="${book.condition.name()}"
+                                      th:text="${book.condition.displayName}"></span>
+                            </div>
+                        </div>
+                        <!-- Body -->
+                        <div class="book-card-body">
+                            <div class="book-card-meta"
+                                 th:text="${book.category != null ? book.category : 'Textbook'}"></div>
+                            <div class="book-card-title" th:text="${book.title}">Book Title</div>
+                            <div class="book-card-author"
+                                 th:if="${book.author != null}"
+                                 th:text="${book.author}"></div>
+                            <div class="book-card-footer">
+                                <div class="book-card-price"
+                                     th:text="${'$' + book.price}">$0.00</div>
+                                <div class="book-card-location">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    <span th:text="${book.campus}">Campus</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(recentListings)}" class="empty-state">
+            <div class="empty-icon">📚</div>
+            <h3>No books listed yet</h3>
+            <p>Be the first to list a textbook for your fellow students!</p>
+            <a sec:authorize="isAuthenticated()" th:href="@{/my-listings/new}" class="btn-primary-bl mt-3">
+                <i class="fa-solid fa-plus me-1"></i>List Your First Book
+            </a>
+            <a sec:authorize="!isAuthenticated()" th:href="@{/register}" class="btn-primary-bl mt-3">
+                <i class="fa-solid fa-user-plus me-1"></i>Join BookLoop Free
+            </a>
+        </div>
+
+        <!-- Browse all CTA -->
+        <div th:if="${not #lists.isEmpty(recentListings)}" class="text-center mt-5">
+            <a th:href="@{/books}" class="btn-primary-bl">
+                <i class="fa-solid fa-book-open me-2"></i>
+                Browse All Books
+            </a>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="mt-5 pt-3">
+        <h2 class="section-title text-center mb-4">How BookLoop Works</h2>
+        <div class="row g-4 text-center">
+            <div class="col-md-4">
+                <div class="stat-card flex-column text-center py-5 h-100">
+                    <div style="font-size:2.5rem; margin-bottom:1rem;">🔍</div>
+                    <h5 style="font-weight:700; color:var(--color-gray-900);">Browse Listings</h5>
+                    <p style="font-size:0.875rem; color:var(--color-gray-500);">
+                        Search for your required textbooks by title, course code, or category.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card flex-column text-center py-5 h-100">
+                    <div style="font-size:2.5rem; margin-bottom:1rem;">📩</div>
+                    <h5 style="font-weight:700; color:var(--color-gray-900);">Contact the Seller</h5>
+                    <p style="font-size:0.875rem; color:var(--color-gray-500);">
+                        View the seller's campus location and reach out to arrange a meetup.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card flex-column text-center py-5 h-100">
+                    <div style="font-size:2.5rem; margin-bottom:1rem;">🎉</div>
+                    <h5 style="font-weight:700; color:var(--color-gray-900);">Save &amp; Sell</h5>
+                    <p style="font-size:0.875rem; color:var(--color-gray-500);">
+                        Save money buying used books and earn cash selling the ones you no longer need.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{layout/layout :: footer}"></footer>
+<th:block th:replace="~{layout/layout :: scripts}"></th:block>
+</body>
+</html>

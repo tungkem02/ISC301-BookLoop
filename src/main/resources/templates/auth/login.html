@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/layout :: head('Sign In')}"></head>
+<body>
+<nav th:replace="~{layout/layout :: navbar}"></nav>
+
+<main class="page-container page-content">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+
+            <!-- Page header -->
+            <div class="text-center mb-4">
+                <div class="mb-3">
+                    <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--color-primary),#7C3AED);
+                                border-radius:var(--radius-xl);display:inline-flex;align-items:center;
+                                justify-content:center;font-size:1.75rem;">
+                        🔐
+                    </div>
+                </div>
+                <h1 class="section-title">Welcome back!</h1>
+                <p class="text-muted">Sign in to your BookLoop account.</p>
+            </div>
+
+            <div class="bl-form-card">
+
+                <!-- Success from registration -->
+                <div th:if="${successMessage}" class="alert-success-bl alert-auto-dismiss mb-4">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span th:text="${successMessage}"></span>
+                </div>
+
+                <!-- Login error -->
+                <div th:if="${param.error}" class="alert-error-bl mb-4">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Invalid email or password. Please try again.</span>
+                </div>
+
+                <!-- Logout success -->
+                <div th:if="${param.logout}" class="alert-success-bl alert-auto-dismiss mb-4">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>You have been signed out successfully.</span>
+                </div>
+
+                <!--
+                    Spring Security processes this form at /login (POST).
+                    The username parameter is mapped to the email field via our UserDetailsService.
+                    Thymeleaf automatically adds the CSRF hidden field when using th:action.
+                -->
+                <form th:action="@{/login}" method="post" id="loginForm">
+
+                    <!-- Email (Spring Security calls this "username") -->
+                    <div class="bl-form-group">
+                        <label for="username">Student Email</label>
+                        <input type="email" id="username" name="username"
+                               class="bl-form-control"
+                               placeholder="your.email@university.edu"
+                               autocomplete="email" required/>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="bl-form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password"
+                               class="bl-form-control"
+                               placeholder="Your password"
+                               autocomplete="current-password" required/>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" id="loginBtn"
+                            class="btn-primary-bl w-100 justify-content-center mt-2"
+                            style="padding: 0.75rem 1.5rem; font-size: 1rem;">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In
+                    </button>
+                </form>
+
+                <!-- Register link -->
+                <p class="text-center mt-4 text-muted" style="font-size:0.875rem;">
+                    Don't have an account?
+                    <a th:href="@{/register}" style="font-weight:600;">Register for free</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{layout/layout :: footer}"></footer>
+<th:block th:replace="~{layout/layout :: scripts}"></th:block>
+</body>
+</html>
